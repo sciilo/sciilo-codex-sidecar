@@ -1,0 +1,32 @@
+{
+  "name": "@sciilo/codex-sidecar",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Local bridge between Sciilo and Codex App Server",
+  "license": "Apache-2.0",
+  "bin": {
+    "sciilo-sidecar": "./bin/sciilo-sidecar.js"
+  },
+  "scripts": {
+    "start": "node ./bin/sciilo-sidecar.js start",
+    "setup": "node ./bin/sciilo-sidecar.js setup",
+    "status": "node ./bin/sciilo-sidecar.js status",
+    "test": "node --test test/*.test.js",
+    "test:integration": "node ./scripts/quarkus-smoke.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@openai/codex": "0.146.0",
+    "ws": "^8.18.3"
+  },
+  "files": [
+    "bin",
+    "src",
+    "README.md",
+    "LICENSE",
+    "NOTICE"
+  ]
+}
