@@ -3,6 +3,8 @@ import { createHash, randomUUID } from 'node:crypto'
 import { basename } from 'node:path'
 import WebSocket from 'ws'
 import { CodexAppServer } from './codex-app-server.js'
+import { createHandoffKeypair, openSealedDek } from './vault.js'
+import { openText, sealArguments } from './document-seal.js'
 
 const RECONNECT_DELAYS = [500, 1_000, 2_000, 5_000, 10_000, 30_000]
 const HANDSHAKE_TIMEOUT = 10_000
@@ -54,6 +56,12 @@ export class SidecarBridge extends EventEmitter {
     this.codex.on('log', line => this.emit('log', line))
     this.codex.on('exit', error => this.emit('error', error))
     await this.codex.start()
+    // A throwaway key pair, forged at start-up and lost on exit. The private
+    // half is non-extractable: it cannot be serialised, therefore it cannot be
+    // written to a config file even by mistake. The browser seals the vault key
+    // for this public half alone; Sciilo relays a block it cannot open.
+    this.vault = await createHandoffKeypair()
+    this.vaultKey = null
     this.connect()
   }
 
@@ -228,7 +236,22 @@ export class SidecarBridge extends EventEmitter {
           codex: true,
           toolCount: this.tools.length,
           workspace: workspaceIdentity(this.config.workspace),
+          vaultPublicKey: this.vault?.publicKey ?? null,
         })
+        break
+      case 'vault.key':
+      
+        openSealedDek(this.vault.privateKey, frame.sealed)
+          .then(key => {
+            this.vaultKey = key
+            this.emit('vaultUnlocked')
+          })
+          .catch(() => {
+            // Sealed for another sidecar, or altered in transit. Working
+            // without it beats working with a key we cannot trust.
+            this.vaultKey = null
+            this.emit('vaultLocked')
+          })
         break
       case 'assistant.turn':
         this.startTurn(frame).catch(error => this.send({
@@ -369,27 +392,7 @@ export class SidecarBridge extends EventEmitter {
       return
     }
     if (frame.method === 'item/tool/call') {
-      const externalId = randomUUID()
-      const state = this.activeStateFor(frame)
-      this.pendingTools.set(externalId, {
-        codexId: frame.id,
-        tool: frame.params.tool,
-        arguments: frame.params.arguments,
-        turnRequestId: state?.requestId,
-        conversationId: state?.conversationId,
-      })
-      if (!this.send({
-        type: 'tool.call',
-        requestId: externalId,
-        tool: frame.params.tool,
-        arguments: frame.params.arguments || {},
-      })) {
-        this.pendingTools.delete(externalId)
-        this.codex.respond(frame.id, {
-          contentItems: [{ type: 'inputText', text: 'The application is disconnected.' }],
-          success: false,
-        })
-      }
+      this.dispatchToolCall(frame)
       return
     }
     if (frame.method === 'item/tool/requestUserInput') {
@@ -438,6 +441,47 @@ export class SidecarBridge extends EventEmitter {
     this.codex.respondError(frame.id, `Unsupported Codex request: ${frame.method}`, -32601)
   }
 
+  /**
+   * Sends a tool call out, with its content sealed first.
+   *
+   * The sealed arguments are what gets remembered, not the originals: they are
+   * echoed back in `artifact.created`, and echoing the clear text there would
+   * hand the server exactly what the sealing just took away from it.
+   *
+   * Sealing failure does not cancel the call. Losing the user's work is the
+   * worse outcome, and the database guard reports anything readable that lands
+   * in storage — a silent skip here cannot pass for success there.
+   */
+  async dispatchToolCall(frame) {
+    const externalId = randomUUID()
+    const state = this.activeStateFor(frame)
+    let args = frame.params.arguments || {}
+    try {
+      args = await sealArguments(this.vaultKey, frame.params.tool, args)
+    } catch (failure) {
+      this.emit('vaultSealFailed', { tool: frame.params.tool, reason: failure.message })
+    }
+    this.pendingTools.set(externalId, {
+      codexId: frame.id,
+      tool: frame.params.tool,
+      arguments: args,
+      turnRequestId: state?.requestId,
+      conversationId: state?.conversationId,
+    })
+    if (!this.send({
+      type: 'tool.call',
+      requestId: externalId,
+      tool: frame.params.tool,
+      arguments: args,
+    })) {
+      this.pendingTools.delete(externalId)
+      this.codex.respond(frame.id, {
+        contentItems: [{ type: 'inputText', text: 'The application is disconnected.' }],
+        success: false,
+      })
+    }
+  }
+
   activeStateFor(frame) {
     return frame.params?.threadId
       ? this.activeByThread.get(frame.params.threadId)
@@ -479,12 +523,22 @@ export class SidecarBridge extends EventEmitter {
     }
   }
 
-  resolveTool(frame) {
+  async resolveTool(frame) {
     const pending = this.pendingTools.get(frame.requestId)
     if (!pending) return
     this.pendingTools.delete(frame.requestId)
+    // The other half of the boundary. A read tool now answers with ciphertext
+    // where the document body used to be; the agent has to receive the body.
+    // Without this, sealing would not make the project private — it would make
+    // it incomprehensible to the one writing it.
+    let content = frame.content || ''
+    try {
+      content = await openText(this.vaultKey, content)
+    } catch (failure) {
+      this.emit('vaultOpenFailed', { tool: pending.tool, reason: failure.message })
+    }
     this.codex.respond(pending.codexId, {
-      contentItems: [{ type: 'inputText', text: frame.content || '' }],
+      contentItems: [{ type: 'inputText', text: content }],
       success: Boolean(frame.success),
     })
     const result = parseToolContent(frame.content)
@@ -532,7 +586,7 @@ export class SidecarBridge extends EventEmitter {
 export function workspaceIdentity(workspace) {
   const normalized = String(workspace || '')
   return {
-    name: basename(normalized) || 'Projet',
+    name: basename(normalized) || 'Project',
     fingerprint: createHash('sha256').update(normalized).digest('hex'),
   }
 }

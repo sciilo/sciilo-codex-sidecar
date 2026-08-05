@@ -51,13 +51,13 @@ export class CodexAppServer extends EventEmitter {
     this.notify('initialized')
     const account = await this.request('account/read', { refreshToken: false })
     if (account?.requiresOpenaiAuth && !account?.account) {
-      throw new Error('Codex n’est pas authentifié. Lancez `sciilo-sidecar setup`.')
+      throw new Error('Codex is not authenticated. Run `sciilo-sidecar setup`.')
     }
   }
 
   request(method, params) {
     if (!this.child?.stdin?.writable) {
-      return Promise.reject(new Error('Codex App Server n’est pas disponible.'))
+      return Promise.reject(new Error('Codex App Server is unavailable.'))
     }
     const id = this.nextId++
     return new Promise((resolve, reject) => {
@@ -96,7 +96,7 @@ export class CodexAppServer extends EventEmitter {
       if (!pending) return
       this.pending.delete(String(frame.id))
       if (frame.error) {
-        const error = new Error(frame.error.message || `Échec ${pending.method}`)
+        const error = new Error(frame.error.message || `${pending.method} failed`)
         error.code = frame.error.code
         pending.reject(error)
       } else {

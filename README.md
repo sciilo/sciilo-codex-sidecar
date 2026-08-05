@@ -12,6 +12,41 @@ Your project code remains in your local Codex workspace. Sciilo receives only
 the folder name and a fingerprint used to recognize the project; the absolute
 folder path is never sent.
 
+## How Sciilo protects document contents
+
+Sciilo encrypts document contents before they are stored. Markdown bodies,
+diagram sources, notes, and generated document excerpts are sealed with
+authenticated AES-256-GCM encryption. The Sciilo backend stores ciphertext and
+never receives the document data key in readable form, so it cannot open these
+protected fields.
+
+Codex still needs to read and update documents to be useful. When the sidecar
+starts, it creates an ephemeral ECDH P-256 key pair. Its private key is
+non-extractable, remains in process memory, and disappears when the sidecar
+stops. The browser seals the document data key for that running sidecar's
+public key; Sciilo only relays the sealed parcel. A parcel captured from an
+earlier run cannot be opened by a later sidecar process.
+
+Once unlocked, the sidecar decrypts protected fields in memory for the local
+Codex runtime and encrypts content-bearing tool calls before they reach the
+backend. Each encrypted value is bound to its document and field. Altering it,
+or moving it to a different document or field, makes decryption fail instead
+of returning plausible but modified content.
+
+This protection has deliberate boundaries:
+
+- the running sidecar and local Codex process can read plaintext, because they
+  need it to work on the documents;
+- document titles, dates, identifiers, links, and other library metadata remain
+  readable so Sciilo can organize the library without opening the vault;
+- document encryption does not cover project files in the local workspace or
+  arbitrary text shared in prompts and assistant conversations;
+- the document key is not kept in the sidecar configuration file; access is
+  restored through the Sciilo vault, using the account password or the recovery
+  key shown by Sciilo;
+- losing both the password and the recovery key can make encrypted contents
+  unrecoverable: there is no server-side back door.
+
 ## Before you begin
 
 You need:

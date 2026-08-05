@@ -12,16 +12,26 @@ export function resolveWorkspace(explicit) {
 }
 
 export async function loadConfig(path = defaultConfigPath()) {
-  let raw
+
+  let rawConfig;
+
   try {
-    raw = await readFile(path, 'utf8')
+
+    rawConfig; = await readFile(path, 'utf8');
+
   } catch (error) {
-    if (error.code === 'ENOENT') return null
-    throw error
+
+    if (error.code === 'ENOENT') return null;
+
+    throw error;
+    
   }
-  const config = JSON.parse(raw)
-  validateConfig(config)
-  return normalizeConfig(config)
+
+  const config = JSON.parse(rawConfig);
+
+  validateConfig(config);
+
+  return normalizeConfig(config);
 }
 
 export async function saveConfig(config, path = defaultConfigPath()) {
