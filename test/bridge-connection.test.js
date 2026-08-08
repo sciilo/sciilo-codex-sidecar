@@ -136,6 +136,69 @@ test('passes server-owned instructions through without owning a prompt', async (
   assert.equal(requests[1].method, 'turn/start')
 })
 
+/**
+ * The server sends the instructions once per connection, not with every turn.
+ * A second conversation therefore arrives WITHOUT them, and its thread must
+ * still be configured — otherwise the agent would quietly lose its policy from
+ * the second conversation onwards, which is a failure nothing would report.
+ */
+test('a later thread is configured from the instructions kept in memory', async () => {
+  const requests = []
+  const bridge = new SidecarBridge(config, {
+    WebSocketClass: FakeWebSocket,
+    codex: {
+      stop() {},
+      async request(method, parameters) {
+        requests.push({ method, parameters })
+        if (method === 'thread/start') return { thread: { id: `thread-${requests.length}` } }
+        return { turn: { id: `turn-${requests.length}` } }
+      },
+    },
+  })
+  bridge.ready = true
+
+  await bridge.startTurn({
+    requestId: 'request-1',
+    conversationId: 'conversation-1',
+    message: 'Bonjour',
+    baseInstructions: 'SERVER-OWNED INSTRUCTIONS',
+  })
+  // Deuxième conversation, trame nue : le serveur ne les renvoie plus.
+  await bridge.startTurn({
+    requestId: 'request-2',
+    conversationId: 'conversation-2',
+    message: 'Encore',
+  })
+
+  const starts = requests.filter(request => request.method === 'thread/start')
+  assert.equal(starts.length, 2)
+  assert.equal(starts[1].parameters.baseInstructions, 'SERVER-OWNED INSTRUCTIONS')
+})
+
+test('without instructions ever received, a thread starts without inventing any', async () => {
+  const requests = []
+  const bridge = new SidecarBridge(config, {
+    WebSocketClass: FakeWebSocket,
+    codex: {
+      stop() {},
+      async request(method, parameters) {
+        requests.push({ method, parameters })
+        if (method === 'thread/start') return { thread: { id: 'thread-bare' } }
+        return { turn: { id: 'turn-bare' } }
+      },
+    },
+  })
+  bridge.ready = true
+
+  await bridge.startTurn({
+    requestId: 'request-bare',
+    conversationId: 'conversation-bare',
+    message: 'Bonjour',
+  })
+
+  assert.equal('baseInstructions' in requests[0].parameters, false)
+})
+
 test('replays a pending approval with the same request id after a browser reconnect', () => {
   FakeWebSocket.instances.length = 0
   const responses = []

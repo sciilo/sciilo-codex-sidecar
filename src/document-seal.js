@@ -25,18 +25,34 @@ export async function openValue(key, token) {
   return openField(key, payload, contextOf(documentId, field))
 }
 
+/**
+ * Opens every sealed token embedded in a piece of text.
+ *
+ * <p>The replacement goes through a FUNCTION, never a string. Passing the
+ * plaintext as the replacement made `$&`, `` $` ``, `$'` and `$1` inside it
+ * expand as substitution patterns: a decrypted note containing `100 $&` used to
+ * paste the ciphertext token back into what the agent reads. The content is
+ * data, and this is the only way to say so.</p>
+ *
+ * <p>Tokens are opened once each and substituted in a single pass. Replacing
+ * them one at a time re-scanned the whole text per token, which on a board
+ * carrying several sealed fields is quadratic for no reason.</p>
+ */
 export async function openText(key, text) {
   if (typeof text !== 'string' || !text.includes(MARKER)) return text
-  const tokens = text.match(TOKEN) || []
-  let out = text
-  for (const token of tokens) {
+  const tokens = [...new Set(text.match(TOKEN) || [])]
+  if (!tokens.length) return text
+
+  const clear = new Map()
+  await Promise.all(tokens.map(async token => {
     try {
-      out = out.replace(token, await openValue(key, token))
+      clear.set(token, await openValue(key, token))
     } catch {
-      // ...
+      // Left as it stands: a token that refuses to open is better shown
+      // unreadable than replaced by nothing, which would read as empty.
     }
-  }
-  return out
+  }))
+  return text.replace(TOKEN, token => clear.get(token) ?? token)
 }
 
 export function diagramKind(language, source) {

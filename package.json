@@ -13,6 +13,7 @@
     "setup": "node ./bin/sciilo-sidecar.js setup",
     "status": "node ./bin/sciilo-sidecar.js status",
     "test": "node --test test/*.test.js",
+    "vault:sync": "cp \"${SCIILO_VAULT:-../sidecar/vault/vault.js}\" src/vault.js",
     "test:integration": "node ./scripts/quarkus-smoke.js"
   },
   "engines": {

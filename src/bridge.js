@@ -33,6 +33,9 @@ export class SidecarBridge extends EventEmitter {
     this.codex = codex
     this.socket = null
     this.tools = []
+    // Server-owned, received once per connection and reused for every thread
+    // this process starts. Never read from disk, never written to it.
+    this.baseInstructions = null
     this.threads = new Map()
     this.activeByThread = new Map()
     this.pendingTools = new Map()
@@ -287,6 +290,17 @@ export class SidecarBridge extends EventEmitter {
     if (!this.ready) {
       throw new Error('The sidecar is still loading the application tools.')
     }
+    // The server owns these instructions and now sends them ONCE per connection,
+    // not with every turn: they only ever configure a newly created thread, and
+    // resending thousands of words per message was both waste and one more
+    // chance to capture the prompt off a machine that is not ours. Keeping them
+    // here is what makes the second thread of a session as well-configured as
+    // the first. The cache dies with the process, exactly like the threads it
+    // configures — so the server, which tracks the same transport, sends again
+    // at the next connection without either side asking.
+    if (typeof frame.baseInstructions === 'string' && frame.baseInstructions.trim()) {
+      this.baseInstructions = frame.baseInstructions
+    }
     const conversationId = frame.conversationId || randomUUID()
     let threadId = this.threads.get(conversationId)
     const startsNewThread = !threadId
@@ -299,8 +313,8 @@ export class SidecarBridge extends EventEmitter {
         sandbox: 'workspace-write',
         dynamicTools: dynamicTools(this.tools),
       }
-      if (typeof frame.baseInstructions === 'string' && frame.baseInstructions.trim()) {
-        threadOptions.baseInstructions = frame.baseInstructions
+      if (this.baseInstructions) {
+        threadOptions.baseInstructions = this.baseInstructions
       }
       const started = await this.codex.request('thread/start', threadOptions)
       threadId = started.thread.id

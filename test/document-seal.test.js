@@ -59,6 +59,34 @@ test('content is restored inside the prose a tool wrote around it', async () => 
   assert.ok(!answer.includes('sciilo:sealed'))
 })
 
+test('a dollar sign in the content is content, not a substitution pattern', async () => {
+  const dek = await key()
+  const id = crypto.randomUUID()
+  // `$&` is the whole match, '$`' what precedes it: passed as a replacement
+  // STRING, both expanded, and `$&` pasted the ciphertext back into the answer
+  // the agent reads. Prices and shell snippets carry dollars all the time.
+  const content = 'flowchart TB\n  A["coût: 100 $& et $` puis $1"]'
+  const token = await sealValue(dek, id, 'source', content)
+
+  const answer = await openText(dek, `Source:\n${token}\nEnd.`)
+
+  assert.ok(answer.includes(content))
+  assert.ok(!answer.includes('sciilo:sealed'))
+})
+
+test('several tokens in one text all open', async () => {
+  const dek = await key()
+  const id = crypto.randomUUID()
+  const first = await sealValue(dek, id, 'source', MERMAID)
+  const second = await sealValue(dek, id, 'excerpt', 'Un résumé')
+
+  const answer = await openText(dek, `A: ${first}\nB: ${second}`)
+
+  assert.ok(answer.includes(MERMAID))
+  assert.ok(answer.includes('Un résumé'))
+  assert.ok(!answer.includes('sciilo:sealed'))
+})
+
 test('an unopenable token stays put rather than vanishing', async () => {
   const dek = await key()
   const stranger = await sealValue(await key(), crypto.randomUUID(), 'source', MERMAID)
