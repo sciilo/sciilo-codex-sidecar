@@ -20,7 +20,7 @@
     "node": ">=22"
   },
   "dependencies": {
-    "@openai/codex": "0.146.0",
+    "@openai/codex": "0.147.0",
     "ws": "^8.18.3"
   },
   "files": [
