@@ -237,7 +237,7 @@ configuration and local Codex session are preserved.
 Remove the sidecar and its private Codex runtime:
 
 ```shell
-npm uninstall --global @sciilo/codex-sidecar
+npm uninstall --global @sciilo.ai/codex-sidecar
 ```
 
 This command does not remove the configuration stored in

@@ -14,7 +14,7 @@
 
 set -euo pipefail
 
-PACKAGE_NAME='@sciilo/codex-sidecar'
+PACKAGE_NAME='@sciilo.ai/codex-sidecar'
 COMMAND_NAME='sciilo-sidecar'
 MIN_NODE_MAJOR=22
 TEMP_DIR=''

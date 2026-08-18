@@ -1,5 +1,5 @@
 {
-  "name": "@sciilo/codex-sidecar",
+  "name": "@sciilo.ai/codex-sidecar",
   "version": "0.1.0",
   "type": "module",
   "description": "Local bridge between Sciilo and Codex App Server",
