@@ -1,16 +1,16 @@
 {
   "name": "@sciilo.ai/codex-sidecar",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "description": "Local bridge between Sciilo and Codex App Server",
   "license": "Apache-2.0",
   "bin": {
-    "sciilo-sidecar": "./bin/sciilo-sidecar.js"
+    "sciilo-codex": "./bin/sciilo-codex.js"
   },
   "scripts": {
-    "start": "node ./bin/sciilo-sidecar.js start",
-    "setup": "node ./bin/sciilo-sidecar.js setup",
-    "status": "node ./bin/sciilo-sidecar.js status",
+    "start": "node ./bin/sciilo-codex.js start",
+    "setup": "node ./bin/sciilo-codex.js setup",
+    "status": "node ./bin/sciilo-codex.js status",
     "test": "node --test test/*.test.js",
     "vault:sync": "cp \"${SCIILO_VAULT:-../sidecar/vault/vault.js}\" src/vault.js",
     "test:integration": "node ./scripts/quarkus-smoke.js",

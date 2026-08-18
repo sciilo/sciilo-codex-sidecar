@@ -8,7 +8,7 @@
  * <p>Two things are deliberately conditional. Colour is dropped unless the
  * output is a terminal that wants it, because a banner is also written to log
  * files and journals, where escape codes are noise. The drawing itself is
- * dropped when the output is not a terminal at all: a piped `sciilo-sidecar`
+ * dropped when the output is not a terminal at all: a piped `sciilo-codex`
  * should print a line one can read and grep, not five lines of blocks.</p>
  */
 

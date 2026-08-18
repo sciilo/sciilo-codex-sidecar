@@ -76,36 +76,23 @@ npm --version
 
 The first command must display `v22` or a higher version number.
 
-### 2. Download and install the sidecar
+### 2. Install the sidecar
 
-From this repository's GitHub page:
-
-1. click **Code**, then **Download ZIP**;
-2. extract the downloaded archive;
-3. open a terminal in the extracted folder;
-4. run:
+Open a terminal — anywhere, the folder does not matter — and run:
 
 ```shell
-chmod +x install.sh
-./install.sh
+npm install -g @sciilo.ai/codex-sidecar
 ```
 
 The installation automatically downloads the Codex version selected for the
 sidecar and the binary matching your computer. Codex remains a private
 dependency: no global `codex` command is required.
 
-You may move or delete the downloaded folder after installation without
-breaking the installed command.
-
 Check that the sidecar is available:
 
 ```shell
-sciilo-sidecar --help
+sciilo-codex --help
 ```
-
-> On Windows, use
-> [WSL](https://learn.microsoft.com/windows/wsl/install), because the
-> installation script uses Bash.
 
 ### 3. Generate the Sciilo connection key
 
@@ -127,7 +114,7 @@ session, or an OpenAI API key.
 Run:
 
 ```shell
-sciilo-sidecar setup
+sciilo-codex setup
 ```
 
 The program asks for:
@@ -162,7 +149,7 @@ To keep the key out of your terminal history, enter it silently:
 read -s -p "OpenAI API key: " SCIILO_CODEX_API_KEY
 echo
 export SCIILO_CODEX_API_KEY
-sciilo-sidecar setup
+sciilo-codex setup
 unset SCIILO_CODEX_API_KEY
 ```
 
@@ -180,7 +167,7 @@ key uses your OpenAI Platform organization's usage-based billing. See the
 for details.
 
 The sidecar configuration is stored in
-`~/.config/sciilo-sidecar/config.json`, with permissions restricted to your
+`~/.config/sciilo-codex/config.json`, with permissions restricted to your
 user account. One configuration works for every project on the computer.
 
 ### 5. Start the sidecar in a project
@@ -189,7 +176,7 @@ Open a terminal in the project folder:
 
 ```shell
 cd /path/to/my-project
-sciilo-sidecar
+sciilo-codex
 ```
 
 The current folder becomes the Codex workspace and selects the corresponding
@@ -199,7 +186,7 @@ project in Sciilo. Keep this terminal open while using the sidecar. Press
 To select a folder without changing directories:
 
 ```shell
-sciilo-sidecar --workspace /path/to/my-project
+sciilo-codex --workspace /path/to/my-project
 ```
 
 ## Everyday use
@@ -207,14 +194,14 @@ sciilo-sidecar --workspace /path/to/my-project
 Display the configuration and Codex sign-in status:
 
 ```shell
-sciilo-sidecar status
+sciilo-codex status
 ```
 
 Open another project:
 
 ```shell
 cd /path/to/another-project
-sciilo-sidecar
+sciilo-codex
 ```
 
 Only one sidecar may use a connection key at a time. If two processes connect
@@ -223,14 +210,30 @@ replacing each other.
 
 ## Updating
 
-Download and extract the new repository version, then run:
-
 ```shell
-./install.sh
+npm install -g @sciilo.ai/codex-sidecar@latest
 ```
 
 The sidecar and its private Codex runtime are replaced together. Your Sciilo
 configuration and local Codex session are preserved.
+
+### Coming from 0.1.0
+
+The command was called `sciilo-sidecar` in 0.1.0. It is now `sciilo-codex`, to
+match `sciilo-claude` and to say which Agent it carries. Remove the old command
+before installing, otherwise it stays in your `PATH` alongside the new one:
+
+```shell
+npm uninstall -g @sciilo.ai/codex-sidecar
+npm install -g @sciilo.ai/codex-sidecar
+```
+
+The configuration directory follows the same rename. Move it to keep your
+pairing, or run `sciilo-codex setup` again:
+
+```shell
+mv ~/.config/sciilo-sidecar ~/.config/sciilo-codex
+```
 
 ## Uninstalling
 
@@ -241,7 +244,7 @@ npm uninstall --global @sciilo.ai/codex-sidecar
 ```
 
 This command does not remove the configuration stored in
-`~/.config/sciilo-sidecar/` or the local session managed by Codex.
+`~/.config/sciilo-codex/` or the local session managed by Codex.
 
 ## Security and privacy
 
@@ -265,10 +268,17 @@ This command does not remove the configuration stored in
 Install the current LTS version from [nodejs.org](https://nodejs.org/), reopen
 the terminal, and run `node --version` again.
 
-### `sciilo-sidecar: command not found`
+### `sciilo-codex: command not found`
 
-Run `./install.sh` again. At the end, the installer displays either the command
-path or the line you need to add to your `PATH`.
+The command was installed outside your `PATH`. Ask npm where it puts global
+commands:
+
+```shell
+npm prefix -g
+```
+
+The commands live in the `bin` subfolder of that path. Add it to your `PATH`,
+then reopen the terminal.
 
 ### A global `codex` command cannot be found
 
@@ -276,30 +286,36 @@ This is expected: the Codex runtime supplied with the sidecar is private and
 does not need to be in your `PATH`. Use:
 
 ```shell
-sciilo-sidecar status
+sciilo-codex status
 ```
 
 ### The Codex runtime is missing or damaged
 
-Download the repository again and run:
+Reinstall the sidecar:
 
 ```shell
-./install.sh
+npm install -g @sciilo.ai/codex-sidecar@latest
 ```
 
-The installer automatically downloads the Codex package for your platform.
+The installation automatically downloads the Codex package for your platform.
 
 ### Permission error during installation
 
-Do not use `sudo`. Install Node.js for your user account, reopen the terminal,
-and run `./install.sh` again.
+Do not use `sudo`. A global install that asks for administrator rights means
+npm is writing outside your account. Point it at a folder you own:
+
+```shell
+npm config set prefix ~/.local
+```
+
+Add `~/.local/bin` to your `PATH`, reopen the terminal, and install again.
 
 ### Codex is not authenticated
 
 Run:
 
 ```shell
-sciilo-sidecar setup
+sciilo-codex setup
 ```
 
 To use an API key, repeat the commands from option B without writing the key
@@ -310,7 +326,7 @@ directly on the command line.
 Stop every sidecar with `Ctrl+C`, generate a new key in Sciilo, then run:
 
 ```shell
-sciilo-sidecar setup
+sciilo-codex setup
 ```
 
 ### The sidecar does not connect
@@ -319,7 +335,7 @@ Check:
 
 ```shell
 node --version
-sciilo-sidecar status
+sciilo-codex status
 ```
 
 Also make sure the Sciilo address starts with `https://`, except for a local

@@ -39,7 +39,7 @@ export class CodexAppServer extends EventEmitter {
 
     await this.request('initialize', {
       clientInfo: {
-        name: 'sciilo-sidecar',
+        name: 'sciilo-codex',
         title: 'Sciilo Codex Sidecar',
         version: '0.1.0',
       },
@@ -51,7 +51,7 @@ export class CodexAppServer extends EventEmitter {
     this.notify('initialized')
     const account = await this.request('account/read', { refreshToken: false })
     if (account?.requiresOpenaiAuth && !account?.account) {
-      throw new Error('Codex is not authenticated. Run `sciilo-sidecar setup`.')
+      throw new Error('Codex is not authenticated. Run `sciilo-codex setup`.')
     }
   }
 

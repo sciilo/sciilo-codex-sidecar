@@ -163,7 +163,7 @@ async function renewConnectionKey(path, config, bridge, reason) {
   console.log('sidecar: click Connect in Sciilo, copy the new key, then paste it here.')
 
   if (!stdin.isTTY || !stdout.isTTY) {
-    console.log(`sidecar: not an interactive terminal; run "sciilo-sidecar setup --config ${path}" instead.`)
+    console.log(`sidecar: not an interactive terminal; run "sciilo-codex setup --config ${path}" instead.`)
     return null
   }
 
@@ -209,9 +209,9 @@ function commandOutput(result) {
 
 function usage() {
   console.log(`Usage:
-  sciilo-sidecar setup [--config path]
-  sciilo-sidecar start [--workspace path] [--config path]
-  sciilo-sidecar status [--workspace path] [--config path]
+  sciilo-codex setup [--config path]
+  sciilo-codex start [--workspace path] [--config path]
+  sciilo-codex status [--workspace path] [--config path]
 
 Without --workspace, the sidecar takes the current directory as the project.
 

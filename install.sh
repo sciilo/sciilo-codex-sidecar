@@ -10,12 +10,12 @@
 # command would stop working if that directory were moved or deleted.
 #
 # Nothing is written outside npm's own prefix. Pairing details are asked later
-# by `sciilo-sidecar setup`.
+# by `sciilo-codex setup`.
 
 set -euo pipefail
 
 PACKAGE_NAME='@sciilo.ai/codex-sidecar'
-COMMAND_NAME='sciilo-sidecar'
+COMMAND_NAME='sciilo-codex'
 MIN_NODE_MAJOR=22
 TEMP_DIR=''
 
@@ -40,11 +40,11 @@ main() {
   done
 
   require_tools
-  [ -n "$source" ] || source="${SCIILO_SIDECAR_SOURCE:-$(local_package)}"
+  [ -n "$source" ] || source="${SCIILO_CODEX_SOURCE:-$(local_package)}"
   [ -n "$source" ] || fail \
     'No package found next to this script. Pass --from <path|git URL>.'
 
-  TEMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/sciilo-sidecar-install.XXXXXX")"
+  TEMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/sciilo-codex-install.XXXXXX")"
   trap cleanup EXIT
 
   local target="$source"
@@ -135,7 +135,7 @@ Installs $PACKAGE_NAME globally so that $COMMAND_NAME runs from any directory.
   -h, --help              Show this message.
 
 Environment:
-  SCIILO_SIDECAR_SOURCE   Same as --from.
+  SCIILO_CODEX_SOURCE   Same as --from.
 USAGE
 }
 

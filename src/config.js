@@ -16,8 +16,8 @@ export const DEFAULT_CODEX_MODEL = 'gpt-5.6-sol'
  */
 export const DEFAULT_REASONING_EFFORT = 'medium'
 
-export const defaultConfigPath = () => process.env.SCIILO_SIDECAR_CONFIG
-  || join(homedir(), '.config', 'sciilo-sidecar', 'config.json')
+export const defaultConfigPath = () => process.env.SCIILO_CODEX_CONFIG
+  || join(homedir(), '.config', 'sciilo-codex', 'config.json')
 
 export function resolveWorkspace(explicit) {
   return resolve(explicit || process.cwd())
