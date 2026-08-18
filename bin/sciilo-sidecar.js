@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { createInterface } from 'node:readline/promises'
+import { createRequire } from 'node:module'
 import { stdin, stdout } from 'node:process'
 import {
   DEFAULT_CODEX_MODEL,
@@ -11,6 +12,11 @@ import {
 } from '../src/config.js'
 import { runCodexSync } from '../src/codex-cli.js'
 import { SidecarBridge } from '../src/bridge.js'
+import { banner } from '../src/banner.js'
+
+const require = createRequire(import.meta.url)
+
+const { version } = require('../package.json')
 
 const [command = 'start', ...args] = process.argv.slice(2)
 const configPath = valueAfter(args, '--config') || defaultConfigPath()
@@ -41,7 +47,7 @@ async function setup(path) {
   const previous = await loadConfig(path)
   const terminal = createInterface({ input: stdin, output: stdout })
   try {
-    console.log('Sciilo Codex sidecar setup')
+    stdout.write(banner('Codex sidecar · setup', { version }))
     const appUrl = await terminal.question(
       `Application URL [${previous?.appUrl || 'https://sciilo.ai'}]: `,
     ) || previous?.appUrl || 'https://sciilo.ai'
@@ -118,6 +124,7 @@ async function status(path) {
 }
 
 async function start(config, path) {
+  stdout.write(banner('Codex sidecar', { version }))
   const bridge = new SidecarBridge(config)
   bridge.on('connected', () => console.log(
     `sidecar: connected to ${config.appUrl} — project ${config.workspace}`))
