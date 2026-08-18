@@ -1,7 +1,6 @@
 {
   "name": "@sciilo/codex-sidecar",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
   "description": "Local bridge between Sciilo and Codex App Server",
   "license": "Apache-2.0",
@@ -14,7 +13,8 @@
     "status": "node ./bin/sciilo-sidecar.js status",
     "test": "node --test test/*.test.js",
     "vault:sync": "cp \"${SCIILO_VAULT:-../sidecar/vault/vault.js}\" src/vault.js",
-    "test:integration": "node ./scripts/quarkus-smoke.js"
+    "test:integration": "node ./scripts/quarkus-smoke.js",
+    "prepublishOnly": "npm test"
   },
   "engines": {
     "node": ">=22"
@@ -29,5 +29,25 @@
     "README.md",
     "LICENSE",
     "NOTICE"
-  ]
+  ],
+  "keywords": [
+    "sciilo",
+    "codex",
+    "openai",
+    "agent",
+    "sidecar",
+    "documentation",
+    "diagrams"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sciilo/sciilo-codex-sidecar.git"
+  },
+  "homepage": "https://github.com/sciilo/sciilo-codex-sidecar#readme",
+  "bugs": {
+    "url": "https://github.com/sciilo/sciilo-codex-sidecar/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
 }
