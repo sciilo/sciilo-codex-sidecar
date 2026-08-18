@@ -264,3 +264,32 @@ test('replays a pending approval with the same request id after a browser reconn
     bridge.stop()
   }
 })
+
+test('the reasoning effort is pinned, never inherited from the machine', async () => {
+  const requests = []
+  const bridge = new SidecarBridge(config, {
+    WebSocketClass: FakeWebSocket,
+    codex: {
+      stop() {},
+      async request(method, parameters) {
+        requests.push({ method, parameters })
+        if (method === 'thread/start') return { thread: { id: 'thread-effort' } }
+        return { turn: { id: 'turn-effort' } }
+      },
+    },
+  })
+  bridge.ready = true
+
+  await bridge.startTurn({
+    requestId: 'request-effort',
+    conversationId: 'conversation-effort',
+    message: 'Map the architecture',
+  })
+
+  // Codex settings travel in `config`, keyed as in config.toml. A top-level
+  // `reasoningEffort` is accepted in silence while ~/.codex/config.toml keeps
+  // winning — which is exactly the failure this test exists to prevent.
+  assert.equal(requests[0].method, 'thread/start')
+  assert.equal(requests[0].parameters.config.model_reasoning_effort, 'medium')
+  assert.equal(requests[0].parameters.reasoningEffort, undefined)
+})

@@ -4,6 +4,18 @@ import { homedir } from 'node:os'
 
 export const DEFAULT_CODEX_MODEL = 'gpt-5.6-sol'
 
+/**
+ * Pinned rather than inherited.
+ *
+ * A thread started without this setting takes whatever `model_reasoning_effort`
+ * the machine's `~/.codex/config.toml` happens to hold — a personal CLI
+ * preference, set for an entirely different purpose. On a machine configured
+ * for `xhigh`, every answer paid for maximum reasoning before its first token,
+ * and the product behaved differently from one computer to the next for a
+ * reason no one could see from here.
+ */
+export const DEFAULT_REASONING_EFFORT = 'medium'
+
 export const defaultConfigPath = () => process.env.SCIILO_SIDECAR_CONFIG
   || join(homedir(), '.config', 'sciilo-sidecar', 'config.json')
 
@@ -52,6 +64,8 @@ export function normalizeConfig(config) {
       : null,
     model: configuredModel || DEFAULT_CODEX_MODEL,
     modelProvider: config.modelProvider || null,
+    reasoningEffort: (typeof config.reasoningEffort === 'string'
+      && config.reasoningEffort.trim()) || DEFAULT_REASONING_EFFORT,
   }
 }
 

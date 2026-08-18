@@ -4,6 +4,7 @@ import { basename } from 'node:path'
 import WebSocket from 'ws'
 import { CodexAppServer } from './codex-app-server.js'
 import { createHandoffKeypair, openSealedDek } from './vault.js'
+import { DEFAULT_REASONING_EFFORT } from './config.js'
 import { openText, sealArguments } from './document-seal.js'
 
 const RECONNECT_DELAYS = [500, 1_000, 2_000, 5_000, 10_000, 30_000]
@@ -312,6 +313,13 @@ export class SidecarBridge extends EventEmitter {
         approvalPolicy: 'on-request',
         sandbox: 'workspace-write',
         dynamicTools: dynamicTools(this.tools),
+        // Codex settings travel in `config`, keyed as in config.toml — no
+        // top-level `reasoningEffort` parameter exists, and passing one is
+        // accepted in silence while the machine's own value keeps winning.
+        config: {
+          model_reasoning_effort:
+            this.config.reasoningEffort || DEFAULT_REASONING_EFFORT,
+        },
       }
       if (this.baseInstructions) {
         threadOptions.baseInstructions = this.baseInstructions
